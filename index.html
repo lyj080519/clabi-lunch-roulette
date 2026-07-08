@@ -304,7 +304,7 @@
     </main>
 
     <footer class="foot">
-      <p>실제 웹호스팅에서 열면 팀 공유 구글 시트에서 최신 목록을 자동으로 불러와요 (첫 로딩 때, 그리고 "기본 목록으로 초기화"를 누를 때). 시트에 접근할 수 없는 환경(예: 이 미리보기)에서는 내장된 목록으로 대체돼요.<br />엑셀로 한 번에 바꾸고 싶으면 1행에 "카테고리", "식당명" 머리글을 두고 2행부터 데이터를 채운 뒤 "엑셀로 목록 교체"로 업로드하세요.</p>
+      <p>실제 웹호스팅에서 열면 팀 공유 구글 시트와 양방향으로 연결돼요 — 시트를 수정하면 45초 안에 자동으로 반영되고, 여기서 "식당 이름 추가"로 넣은 항목도 시트에 자동으로 저장돼요. 시트에 접근할 수 없는 환경(예: 이 미리보기)에서는 내장된 목록으로 대체돼요.<br />엑셀로 한 번에 바꾸고 싶으면 1행에 "카테고리", "식당명" 머리글을 두고 2행부터 데이터를 채운 뒤 "엑셀로 목록 교체"로 업로드하세요.</p>
     </footer>
   </div>
 </div>
@@ -326,6 +326,7 @@
   "use strict";
 
   var SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/19fnOPDlQ5hUPC7aNf9ko7QoXy9px2WIPokG9jPX_x5w/export?format=csv";
+  var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxL6gQRiGT5jcTO6A8C6Vn3R3y7XjcMm-OfEfDunE6xK2yamiJn5c6o56ra-F9XzSBn/exec";
 
   var CATEGORY_ORDER = ["한식","중식","일식","분식","양식","기타"];
   var CATEGORY_COLORS = {
@@ -827,11 +828,24 @@
     e.preventDefault();
     var name = addName.value.trim();
     if(!name) return;
-    state.items.push({ id: uid(), name: name, category: addCategory.value, addr: "", active: true });
+    var category = addCategory.value;
+    state.items.push({ id: category + "__" + name, name: name, category: category, addr: "", active: true });
     saveState();
     addName.value = "";
     renderTabs(); renderList(); drawWheel(); updatePoolCount();
+    syncNewItemToSheet(category, name);
   });
+
+  async function syncNewItemToSheet(category, name){
+    if(!APPS_SCRIPT_URL) return;
+    try{
+      var res = await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ category: category, name: name }) });
+      var data = await res.json();
+      if(!data.ok) setStatus("시트에 저장하지 못했어요 (로컬에는 추가됨): " + (data.error || ""));
+    }catch(e){
+      setStatus("시트 연결에 실패했어요 (로컬에는 추가됨). 인터넷 연결을 확인해주세요.");
+    }
+  }
 
   /* ---------- minimal .xlsx reader (zip + inflate via native DecompressionStream, no external libs) ---------- */
   function parseCentralDirectory(bytes, dv){
