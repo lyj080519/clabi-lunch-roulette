@@ -1013,5 +1013,31 @@
   });
 
   updateModeUI(); renderTabs(); renderList(); drawWheel(); updatePoolCount(); renderHistory();
+
+  /* ---------- background polling: pick up new sheet rows without a manual refresh ---------- */
+  var POLL_INTERVAL_MS = 45000;
+  var lastPollAt = 0;
+
+  async function pollForSheetUpdates(){
+    if(spinning) return;
+    lastPollAt = Date.now();
+    var sheetItems = await fetchSheetItems();
+    if(!sheetItems) return;
+    var existingIds = {};
+    state.items.forEach(function(i){ existingIds[i.id] = true; });
+    var fresh = sheetItems.filter(function(i){ return !existingIds[i.id]; });
+    if(fresh.length === 0) return;
+    fresh.forEach(function(i){ state.items.push(Object.assign({active:true}, i)); });
+    saveState();
+    renderTabs(); renderList(); drawWheel(); updatePoolCount();
+    setStatus(fresh.length + "개 메뉴가 시트에서 새로 추가됐어요: " + fresh.map(function(i){ return i.name; }).join(", "));
+  }
+
+  setInterval(pollForSheetUpdates, POLL_INTERVAL_MS);
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible" && Date.now() - lastPollAt > 10000){
+      pollForSheetUpdates();
+    }
+  });
 })();
 </script>
