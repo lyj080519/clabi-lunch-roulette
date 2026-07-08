@@ -647,6 +647,7 @@
         state.items = state.items.filter(function(i){ return i.id !== item.id; });
         state.recent = state.recent.filter(function(id){ return id !== item.id; });
         saveState(); renderTabs(); renderList(); drawWheel(); updatePoolCount();
+        syncDeleteFromSheet(item.category, item.name);
       });
 
       li.appendChild(checkbox); li.appendChild(main); li.appendChild(del);
@@ -845,6 +846,13 @@
     }catch(e){
       setStatus("시트 연결에 실패했어요 (로컬에는 추가됨). 인터넷 연결을 확인해주세요.");
     }
+  }
+
+  async function syncDeleteFromSheet(category, name){
+    if(!APPS_SCRIPT_URL) return;
+    try{
+      await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "delete", category: category, name: name }) });
+    }catch(e){ /* best-effort; item is already gone locally */ }
   }
 
   /* ---------- minimal .xlsx reader (zip + inflate via native DecompressionStream, no external libs) ---------- */
