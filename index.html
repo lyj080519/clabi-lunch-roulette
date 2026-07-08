@@ -328,55 +328,72 @@
   var SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/19fnOPDlQ5hUPC7aNf9ko7QoXy9px2WIPokG9jPX_x5w/export?format=csv";
   var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxL6gQRiGT5jcTO6A8C6Vn3R3y7XjcMm-OfEfDunE6xK2yamiJn5c6o56ra-F9XzSBn/exec";
 
-  var CATEGORY_ORDER = ["한식","중식","일식","분식","양식","기타"];
+  var CATEGORY_ORDER = ["한식","양식","일식","중식","분식","패스트푸드","기타"];
   var CATEGORY_COLORS = {
     "한식": "#e85c33",
-    "중식": "#f2b705",
-    "일식": "#4fa98c",
-    "분식": "#d97a9c",
     "양식": "#6e86a8",
+    "일식": "#4fa98c",
+    "중식": "#f2b705",
+    "분식": "#d97a9c",
+    "패스트푸드": "#c98a3e",
     "기타": "#8c8fa3"
   };
 
   var DEFAULT_ITEMS = [
-    { id:"ramen",    name:"잇쇼니라멘 문정본점",           category:"일식", addr:"법원로 114 엠스테이트 E동" },
+    { id:"ramen",    name:"잇쇼니라멘 문정본점",           category:"일식", addr:"법원로 114 엠스테이트 E동 지1층 B166" },
     { id:"tteok",    name:"골목떡볶이",                     category:"분식", addr:"문정로1길 33" },
-    { id:"chil",     name:"칠성집 갈매기 문정본점",         category:"한식", addr:"법원로11길 7" },
-    { id:"hanyang",  name:"한양중식 문정점",                category:"중식", addr:"송파대로 167 A동" },
-    { id:"bk",       name:"버거킹 문정역점",                category:"양식", addr:"법원로8길 13" },
-    { id:"manae",    name:"만애옥 송파 가락시장본점",       category:"한식", addr:"송파대로24길 5-19" },
+    { id:"chil",     name:"칠성집 갈매기 문정본점",         category:"한식", addr:"법원로11길 7 문정현대지식산업센터 1층" },
+    { id:"hanyang",  name:"한양중식 문정점",                category:"중식", addr:"송파대로 167 A동 205호" },
+    { id:"bk",       name:"버거킹 문정역점",                category:"패스트푸드", addr:"법원로8길 13" },
+    { id:"manae",    name:"만애옥 송파 가락시장본점",       category:"한식", addr:"송파대로24길 5-19 1층" },
     { id:"masan",    name:"마산아구찜탕",                   category:"한식", addr:"새말로 132" },
-    { id:"cheong",   name:"청류",                           category:"한식", addr:"법원로 128 SK V1 B동" },
-    { id:"gohyang",  name:"고향옥얼큰순대국 문정역점",       category:"한식", addr:"법원로11길 7" },
-    { id:"gamja",    name:"행복한 순정감자탕 문정 직영1호점", category:"한식", addr:"송파대로 167 A동 지하" },
-    { id:"ttobar",   name:"또바라기돼지국밥 문정동본점",     category:"한식", addr:"법원로 114 엠스테이트 e동" },
-    { id:"donblanc", name:"돈블랑 송파문정역점",             category:"한식", addr:"송파대로 201 B동" },
-    { id:"usagi",    name:"우사기소바",                     category:"일식", addr:"법원로 114 엠스테이트 E동 지하" },
-    { id:"umi",      name:"우미스시 송파본점",               category:"일식", addr:"송파대로 201 테라타워2" },
-    { id:"kuu",      name:"쿠우쿠우 송파점",                 category:"일식", addr:"송파대로 111 2층" },
-    { id:"mara",     name:"마라공방 문정점",                 category:"중식", addr:"송파대로 167 테라타워1 B동 지하" },
-    { id:"igane",    name:"이가네양꼬치 문정직영점",         category:"중식", addr:"법원로11길 7 C동" },
+    { id:"cheong",   name:"청류",                           category:"한식", addr:"법원로 128 SK V1 B동 219, 220호" },
+    { id:"gohyang",  name:"고향옥얼큰순대국 문정역점",       category:"한식", addr:"법원로11길 7 1층 147, 148, 148-1호" },
+    { id:"gamja",    name:"행복한 순정감자탕 문정 직영1호점", category:"한식", addr:"송파대로 167 테라타워 A동 지하 1층 G181호" },
+    { id:"ttobar",   name:"또바라기돼지국밥 문정동본점",     category:"한식", addr:"법원로 114 엠스테이트 e동 지하164호" },
+    { id:"donblanc", name:"돈블랑 송파문정역점",             category:"한식", addr:"송파대로 201 송파테라타워2 B동 1층 129-135호" },
+    { id:"usagi",    name:"우사기소바",                     category:"일식", addr:"법원로 114 엠스테이트 E동 지하1층 B153호" },
+    { id:"umi",      name:"우미스시 송파본점",               category:"일식", addr:"송파대로 201 테라타워2 B동 108, 109호" },
+    { id:"kuu",      name:"쿠우쿠우 송파점",                 category:"일식", addr:"송파대로 111 2층 201호" },
+    { id:"mara",     name:"마라공방 문정점",                 category:"중식", addr:"송파대로 167 테라타워1 B동 지하1층 G152호" },
+    { id:"igane",    name:"이가네양꼬치 문정직영점",         category:"중식", addr:"법원로11길 7 C동 114호, 115호, 116호" },
     { id:"haenam",   name:"해남짬뽕",                       category:"중식", addr:"법원로 128 SKV1" },
-    { id:"gohban",   name:"고반",                           category:"한식", addr:"" },
-    { id:"cheongdam",name:"청담초밥",                       category:"일식", addr:"" },
-    { id:"toechon",  name:"퇴촌집",                         category:"한식", addr:"" },
-    { id:"panda",    name:"판다",                           category:"중식", addr:"" },
+    { id:"gohban",   name:"고반",                           category:"한식", addr:"송파대로 167 테라타워 B동 B1층 G137호" },
+    { id:"cheongdam",name:"청담초밥",                       category:"일식", addr:"법원로4길 5 송파법조타운 푸르지오시티 1층" },
+    { id:"toechon",  name:"퇴촌집",                         category:"한식", addr:"법원로8길 9 101호" },
+    { id:"panda",    name:"판다",                           category:"중식", addr:"법원로 90 1층 101,102호" },
     { id:"papago",   name:"파파고",                         category:"기타", addr:"" },
-    { id:"nokjeong", name:"녹정",                           category:"한식", addr:"" },
-    { id:"subway",   name:"서브웨이",                       category:"기타", addr:"" },
-    { id:"kfc",      name:"KFC",                            category:"양식", addr:"" },
-    { id:"momstouch",name:"맘스터치",                       category:"양식", addr:"" },
-    { id:"lotteria", name:"롯데리아",                       category:"양식", addr:"" },
-    { id:"milsup",   name:"밀숲",                           category:"한식", addr:"" },
-    { id:"ttunttun", name:"뚠뚠한고등어",                   category:"한식", addr:"" },
-    { id:"gomemui",  name:"고메무이",                       category:"일식", addr:"" },
+    { id:"nokjeong", name:"녹정",                           category:"일식", addr:"법원로 114 엠스테이트 지하1층 E-B154" },
+    { id:"subway",   name:"서브웨이",                       category:"패스트푸드", addr:"법원로 114 현대엠스테이트 C동 119호" },
+    { id:"kfc",      name:"KFC",                            category:"패스트푸드", addr:"송파대로 167 문정테라타워 B동 135호" },
+    { id:"momstouch",name:"맘스터치",                       category:"패스트푸드", addr:"충민로 66 현대가든파이브 지하 1층" },
+    { id:"lotteria", name:"롯데리아",                       category:"패스트푸드", addr:"송파대로 111 205동 115, 116, 118호" },
+    { id:"milsup",   name:"밀숲",                           category:"한식", addr:"법원로 114 엠스테이트 지하1층 b131호" },
+    { id:"ttunttun", name:"뚠뚠한고등어",                   category:"한식", addr:"송파대로 167 A동 지161호" },
+    { id:"gomemui",  name:"고메무이",                       category:"일식", addr:"송파대로 167 A동 B1 G115호" },
     { id:"lahwa",    name:"라화쿵푸",                       category:"중식", addr:"" },
-    { id:"hanchang", name:"한창회관",                       category:"한식", addr:"" },
-    { id:"hansikbuffet", name:"한식뷔페",                   category:"한식", addr:"" },
+    { id:"hanchang", name:"한창회관",                       category:"한식", addr:"법원로 114 E동 지하1층 E-B116호" },
+    { id:"hansikbuffet", name:"한식뷔페",                   category:"한식", addr:"송파대로 201 송파테라타워2 B동 지하1층 G117~G119호" },
     { id:"katsu",    name:"카츠파랑",                       category:"한식", addr:"" },
-    { id:"bulldog",  name:"불독",                           category:"일식", addr:"" },
-    { id:"haruensoku", name:"하루앤소쿠",                   category:"일식", addr:"" },
-    { id:"donkatsu", name:"돈까스의집",                     category:"일식", addr:"" }
+    { id:"bulldog",  name:"불독",                           category:"일식", addr:"법원로 114 엠스테이트 지하1층 108호" },
+    { id:"haruensoku", name:"하루앤소쿠",                   category:"일식", addr:"법원로 114 E동 B139호" },
+    { id:"donkatsu", name:"돈까스의집",                     category:"일식", addr:"법원로 114 엠스테이트 지하1층 b143호" },
+    { id:"dakgukjip", name:"닭국집",                        category:"한식", addr:"법원로 128 1층 C102, C103호" },
+    { id:"seoulkongbiji", name:"서울콩비지",                category:"한식", addr:"동남로4길 33 1층" },
+    { id:"pyeongsangjip", name:"평상집",                    category:"한식", addr:"법원로8길 13 문정헤리움써밋타워 1층 106, 107호" },
+    { id:"hamheungmyeonok", name:"함흥면옥",                category:"한식", addr:"법원로 114 엠스테이트 D동 301호" },
+    { id:"hoangviet", name:"호앙비엣",                      category:"기타", addr:"법원로 128 문정역SKV1 B동 1층 134호" },
+    { id:"mukgol",   name:"묵골",                           category:"한식", addr:"새말로15길 22 1층" },
+    { id:"teumsaeraemyeon", name:"틈새라면",                category:"분식", addr:"법원로 128 SKV1 B동 1층 109호" },
+    { id:"basburger", name:"바스버거",                      category:"패스트푸드", addr:"송파대로 167 문정테라타워 A동 지하1층 G111호" },
+    { id:"manyeogimbap", name:"마녀김밥",                   category:"분식", addr:"법원로 114 엠스테이트 A동 112" },
+    { id:"midoin",   name:"미도인",                         category:"양식", addr:"" },
+    { id:"samgunbudaejjigae", name:"삼군부대찌개",          category:"한식", addr:"" },
+    { id:"slicepizza", name:"슬라이스피자마켓",             category:"패스트푸드", addr:"법원로4길 5 1층 112호" },
+    { id:"namujeotgarak", name:"나무젓가락",                category:"일식", addr:"법원로 114 엠스테이트 B동 지하 1층 155호" },
+    { id:"eunine",   name:"은이네해장국",                   category:"한식", addr:"" },
+    { id:"okdoenjang", name:"옥된장",                       category:"한식", addr:"법원로 114 C동 2층 223, 224호" },
+    { id:"heungdo",  name:"흥도식당",                       category:"일식", addr:"법원로 114 엠스테이트 지하1층 b동 155-1호" }
   ];
 
   var STORAGE_KEY = "clabi-lunch-roulette-v1";
@@ -411,8 +428,9 @@
       rows.forEach(function(r){
         var category = (r[0] || "").trim();
         var name = (r[1] || "").trim();
+        var addr = (r[2] || "").trim();
         if(!name) return;
-        items.push({ id: (category || "기타") + "__" + name, name: name, category: category || "기타", addr: "" });
+        items.push({ id: name, name: name, category: category || "기타", addr: addr });
       });
       return items.length ? items : null;
     }catch(e){
@@ -830,7 +848,7 @@
     var name = addName.value.trim();
     if(!name) return;
     var category = addCategory.value;
-    state.items.push({ id: category + "__" + name, name: name, category: category, addr: "", active: true });
+    state.items.push({ id: name, name: name, category: category, addr: "", active: true });
     saveState();
     addName.value = "";
     renderTabs(); renderList(); drawWheel(); updatePoolCount();
