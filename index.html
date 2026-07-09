@@ -175,6 +175,11 @@
     color: var(--chip-color); background: color-mix(in srgb, var(--chip-color) 18%, transparent);
     flex-shrink:0;
   }
+  .occasion-chip{
+    font-size:10px; font-weight:600; padding:1px 6px; border-radius:3px;
+    color: var(--muted); background: rgba(255,255,255,0.06); border:1px solid var(--line);
+    flex-shrink:0;
+  }
   .row-addr{ font-family:var(--font-mono); font-size:10.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .badge-recent{
     font-size:10px; font-weight:700; color: var(--ink); background: var(--gold);
@@ -187,7 +192,11 @@
   .row-del:hover{ color: var(--red); }
   .row-inactive{ opacity:0.45; }
 
-  .add-form{ display:flex; gap:7px; }
+  .add-form{ display:flex; flex-direction:column; gap:8px; }
+  .add-row{ display:flex; gap:7px; }
+  .add-occasions{ display:flex; flex-wrap:wrap; gap:10px; }
+  .add-occasions label{ display:flex; align-items:center; gap:4px; font-size:12px; color:var(--muted); cursor:pointer; }
+  .add-occasions input{ accent-color: var(--gold); width:14px; height:14px; }
   .add-form input[type="text"]{
     flex:1; min-width:0; background: var(--ink); border:1px solid var(--line); border-radius:6px;
     padding:9px 10px; color:var(--cream); font-family:var(--font); font-size:13.5px;
@@ -259,6 +268,10 @@
             <div class="tabs" id="tabs" role="tablist"></div>
           </div>
           <p class="cat-label" id="twoStageNote" hidden>1단계에서 카테고리를 랜덤으로 고르고, 2단계에서 그 안의 메뉴를 뽑아요</p>
+          <div id="occasionWrap">
+            <span class="cat-label">상황 선택</span>
+            <div class="tabs" id="occasionTabs" role="tablist"></div>
+          </div>
         </div>
         <div class="wheel-wrap">
           <div class="pointer" aria-hidden="true"></div>
@@ -298,9 +311,12 @@
         </div>
         <ul class="menu-list" id="menuList"></ul>
         <form id="addForm" class="add-form">
-          <input type="text" id="addName" placeholder="식당 이름 추가" required />
-          <select id="addCategory"></select>
-          <button type="submit">추가</button>
+          <div class="add-row">
+            <input type="text" id="addName" placeholder="식당 이름 추가" required />
+            <select id="addCategory"></select>
+            <button type="submit">추가</button>
+          </div>
+          <div class="add-occasions" id="addOccasions"></div>
         </form>
       </aside>
     </main>
@@ -342,61 +358,63 @@
     "기타": "#8c8fa3"
   };
 
+  var CATEGORY2_ORDER = ["점심","회식","해장","저녁"];
+
   var DEFAULT_ITEMS = [
-    { id:"ramen",    name:"잇쇼니라멘 문정본점",           category:"일식", addr:"법원로 114 엠스테이트 E동 지1층 B166" },
-    { id:"tteok",    name:"골목떡볶이",                     category:"분식", addr:"문정로1길 33" },
-    { id:"chil",     name:"칠성집 갈매기 문정본점",         category:"한식", addr:"법원로11길 7 문정현대지식산업센터 1층" },
-    { id:"hanyang",  name:"한양중식 문정점",                category:"중식", addr:"송파대로 167 A동 205호" },
-    { id:"bk",       name:"버거킹 문정역점",                category:"패스트푸드", addr:"법원로8길 13" },
-    { id:"manae",    name:"만애옥 송파 가락시장본점",       category:"한식", addr:"송파대로24길 5-19 1층" },
-    { id:"masan",    name:"마산아구찜탕",                   category:"한식", addr:"새말로 132" },
-    { id:"cheong",   name:"청류",                           category:"한식", addr:"법원로 128 SK V1 B동 219, 220호" },
-    { id:"gohyang",  name:"고향옥얼큰순대국 문정역점",       category:"한식", addr:"법원로11길 7 1층 147, 148, 148-1호" },
-    { id:"gamja",    name:"행복한 순정감자탕 문정 직영1호점", category:"한식", addr:"송파대로 167 테라타워 A동 지하 1층 G181호" },
-    { id:"ttobar",   name:"또바라기돼지국밥 문정동본점",     category:"한식", addr:"법원로 114 엠스테이트 e동 지하164호" },
-    { id:"donblanc", name:"돈블랑 송파문정역점",             category:"한식", addr:"송파대로 201 송파테라타워2 B동 1층 129-135호" },
-    { id:"usagi",    name:"우사기소바",                     category:"일식", addr:"법원로 114 엠스테이트 E동 지하1층 B153호" },
-    { id:"umi",      name:"우미스시 송파본점",               category:"일식", addr:"송파대로 201 테라타워2 B동 108, 109호" },
-    { id:"kuu",      name:"쿠우쿠우 송파점",                 category:"일식", addr:"송파대로 111 2층 201호" },
-    { id:"mara",     name:"마라공방 문정점",                 category:"중식", addr:"송파대로 167 테라타워1 B동 지하1층 G152호" },
-    { id:"igane",    name:"이가네양꼬치 문정직영점",         category:"중식", addr:"법원로11길 7 C동 114호, 115호, 116호" },
-    { id:"haenam",   name:"해남짬뽕",                       category:"중식", addr:"법원로 128 SKV1" },
-    { id:"gohban",   name:"고반",                           category:"한식", addr:"송파대로 167 테라타워 B동 B1층 G137호" },
-    { id:"cheongdam",name:"청담초밥",                       category:"일식", addr:"법원로4길 5 송파법조타운 푸르지오시티 1층" },
-    { id:"toechon",  name:"퇴촌집",                         category:"한식", addr:"법원로8길 9 101호" },
-    { id:"panda",    name:"판다",                           category:"중식", addr:"법원로 90 1층 101,102호" },
-    { id:"papago",   name:"파파고",                         category:"기타", addr:"" },
-    { id:"nokjeong", name:"녹정",                           category:"일식", addr:"법원로 114 엠스테이트 지하1층 E-B154" },
-    { id:"subway",   name:"서브웨이",                       category:"패스트푸드", addr:"법원로 114 현대엠스테이트 C동 119호" },
-    { id:"kfc",      name:"KFC",                            category:"패스트푸드", addr:"송파대로 167 문정테라타워 B동 135호" },
-    { id:"momstouch",name:"맘스터치",                       category:"패스트푸드", addr:"충민로 66 현대가든파이브 지하 1층" },
-    { id:"lotteria", name:"롯데리아",                       category:"패스트푸드", addr:"송파대로 111 205동 115, 116, 118호" },
-    { id:"milsup",   name:"밀숲",                           category:"한식", addr:"법원로 114 엠스테이트 지하1층 b131호" },
-    { id:"ttunttun", name:"뚠뚠한고등어",                   category:"한식", addr:"송파대로 167 A동 지161호" },
-    { id:"gomemui",  name:"고메무이",                       category:"일식", addr:"송파대로 167 A동 B1 G115호" },
-    { id:"lahwa",    name:"라화쿵푸",                       category:"중식", addr:"" },
-    { id:"hanchang", name:"한창회관",                       category:"한식", addr:"법원로 114 E동 지하1층 E-B116호" },
-    { id:"hansikbuffet", name:"한식뷔페",                   category:"한식", addr:"송파대로 201 송파테라타워2 B동 지하1층 G117~G119호" },
-    { id:"katsu",    name:"카츠파랑",                       category:"한식", addr:"" },
-    { id:"bulldog",  name:"불독",                           category:"일식", addr:"법원로 114 엠스테이트 지하1층 108호" },
-    { id:"haruensoku", name:"하루앤소쿠",                   category:"일식", addr:"법원로 114 E동 B139호" },
-    { id:"donkatsu", name:"돈까스의집",                     category:"일식", addr:"법원로 114 엠스테이트 지하1층 b143호" },
-    { id:"dakgukjip", name:"닭국집",                        category:"한식", addr:"법원로 128 1층 C102, C103호" },
-    { id:"seoulkongbiji", name:"서울콩비지",                category:"한식", addr:"동남로4길 33 1층" },
-    { id:"pyeongsangjip", name:"평상집",                    category:"한식", addr:"법원로8길 13 문정헤리움써밋타워 1층 106, 107호" },
-    { id:"hamheungmyeonok", name:"함흥면옥",                category:"한식", addr:"법원로 114 엠스테이트 D동 301호" },
-    { id:"hoangviet", name:"호앙비엣",                      category:"기타", addr:"법원로 128 문정역SKV1 B동 1층 134호" },
-    { id:"mukgol",   name:"묵골",                           category:"한식", addr:"새말로15길 22 1층" },
-    { id:"teumsaeraemyeon", name:"틈새라면",                category:"분식", addr:"법원로 128 SKV1 B동 1층 109호" },
-    { id:"basburger", name:"바스버거",                      category:"패스트푸드", addr:"송파대로 167 문정테라타워 A동 지하1층 G111호" },
-    { id:"manyeogimbap", name:"마녀김밥",                   category:"분식", addr:"법원로 114 엠스테이트 A동 112" },
-    { id:"midoin",   name:"미도인",                         category:"양식", addr:"" },
-    { id:"samgunbudaejjigae", name:"삼군부대찌개",          category:"한식", addr:"" },
-    { id:"slicepizza", name:"슬라이스피자마켓",             category:"패스트푸드", addr:"법원로4길 5 1층 112호" },
-    { id:"namujeotgarak", name:"나무젓가락",                category:"일식", addr:"법원로 114 엠스테이트 B동 지하 1층 155호" },
-    { id:"eunine",   name:"은이네해장국",                   category:"한식", addr:"" },
-    { id:"okdoenjang", name:"옥된장",                       category:"한식", addr:"법원로 114 C동 2층 223, 224호" },
-    { id:"heungdo",  name:"흥도식당",                       category:"일식", addr:"법원로 114 엠스테이트 지하1층 b동 155-1호" }
+    { id:"ramen",    name:"잇쇼니라멘 문정본점",           category:"일식", addr:"법원로 114 엠스테이트 E동 지1층 B166", occasions:["점심", "저녁"] },
+    { id:"tteok",    name:"골목떡볶이",                     category:"분식", addr:"문정로1길 33", occasions:["점심", "저녁"] },
+    { id:"chil",     name:"칠성집 갈매기 문정본점",         category:"한식", addr:"법원로11길 7 문정현대지식산업센터 1층", occasions:["점심", "저녁"] },
+    { id:"hanyang",  name:"한양중식 문정점",                category:"중식", addr:"송파대로 167 A동 205호", occasions:["점심", "저녁"] },
+    { id:"bk",       name:"버거킹 문정역점",                category:"패스트푸드", addr:"법원로8길 13", occasions:["점심", "저녁"] },
+    { id:"manae",    name:"만애옥 송파 가락시장본점",       category:"한식", addr:"송파대로24길 5-19 1층", occasions:["점심", "저녁"] },
+    { id:"masan",    name:"마산아구찜탕",                   category:"한식", addr:"새말로 132", occasions:["회식", "저녁"] },
+    { id:"cheong",   name:"청류",                           category:"한식", addr:"법원로 128 SK V1 B동 219, 220호", occasions:["점심", "저녁"] },
+    { id:"gohyang",  name:"고향옥얼큰순대국 문정역점",       category:"한식", addr:"법원로11길 7 1층 147, 148, 148-1호", occasions:["점심", "해장", "저녁"] },
+    { id:"gamja",    name:"행복한 순정감자탕 문정 직영1호점", category:"한식", addr:"송파대로 167 테라타워 A동 지하 1층 G181호", occasions:["점심", "해장", "저녁"] },
+    { id:"ttobar",   name:"또바라기돼지국밥 문정동본점",     category:"한식", addr:"법원로 114 엠스테이트 e동 지하164호", occasions:["점심", "저녁"] },
+    { id:"donblanc", name:"돈블랑 송파문정역점",             category:"한식", addr:"송파대로 201 송파테라타워2 B동 1층 129-135호", occasions:["점심", "저녁"] },
+    { id:"usagi",    name:"우사기소바",                     category:"일식", addr:"법원로 114 엠스테이트 E동 지하1층 B153호", occasions:["점심", "저녁"] },
+    { id:"umi",      name:"우미스시 송파본점",               category:"일식", addr:"송파대로 201 테라타워2 B동 108, 109호", occasions:["점심", "저녁"] },
+    { id:"kuu",      name:"쿠우쿠우 송파점",                 category:"일식", addr:"송파대로 111 2층 201호", occasions:["점심", "저녁"] },
+    { id:"mara",     name:"마라공방 문정점",                 category:"중식", addr:"송파대로 167 테라타워1 B동 지하1층 G152호", occasions:["점심", "저녁"] },
+    { id:"igane",    name:"이가네양꼬치 문정직영점",         category:"중식", addr:"법원로11길 7 C동 114호, 115호, 116호", occasions:["회식", "저녁"] },
+    { id:"haenam",   name:"해남짬뽕",                       category:"중식", addr:"법원로 128 SKV1", occasions:["점심", "저녁"] },
+    { id:"gohban",   name:"고반",                           category:"한식", addr:"송파대로 167 테라타워 B동 B1층 G137호", occasions:["점심", "저녁"] },
+    { id:"cheongdam",name:"청담초밥",                       category:"일식", addr:"법원로4길 5 송파법조타운 푸르지오시티 1층", occasions:["점심", "저녁"] },
+    { id:"toechon",  name:"퇴촌집",                         category:"한식", addr:"법원로8길 9 101호", occasions:["점심", "저녁"] },
+    { id:"panda",    name:"판다",                           category:"중식", addr:"법원로 90 1층 101,102호", occasions:["점심", "저녁"] },
+    { id:"papago",   name:"파파고",                         category:"기타", addr:"", occasions:["점심", "저녁"] },
+    { id:"nokjeong", name:"녹정",                           category:"일식", addr:"법원로 114 엠스테이트 지하1층 E-B154", occasions:["점심", "저녁"] },
+    { id:"subway",   name:"서브웨이",                       category:"패스트푸드", addr:"법원로 114 현대엠스테이트 C동 119호", occasions:["점심", "저녁"] },
+    { id:"kfc",      name:"KFC",                            category:"패스트푸드", addr:"송파대로 167 문정테라타워 B동 135호", occasions:["점심", "저녁"] },
+    { id:"momstouch",name:"맘스터치",                       category:"패스트푸드", addr:"충민로 66 현대가든파이브 지하 1층", occasions:["점심", "저녁"] },
+    { id:"lotteria", name:"롯데리아",                       category:"패스트푸드", addr:"송파대로 111 205동 115, 116, 118호", occasions:["점심", "저녁"] },
+    { id:"milsup",   name:"밀숲",                           category:"한식", addr:"법원로 114 엠스테이트 지하1층 b131호", occasions:["점심", "해장", "저녁"] },
+    { id:"ttunttun", name:"뚠뚠한고등어",                   category:"한식", addr:"송파대로 167 A동 지161호", occasions:["점심", "저녁"] },
+    { id:"gomemui",  name:"고메무이",                       category:"일식", addr:"송파대로 167 A동 B1 G115호", occasions:["점심", "저녁"] },
+    { id:"lahwa",    name:"라화쿵푸",                       category:"중식", addr:"", occasions:["점심", "저녁"] },
+    { id:"hanchang", name:"한창회관",                       category:"한식", addr:"법원로 114 E동 지하1층 E-B116호", occasions:["점심", "회식", "저녁"] },
+    { id:"hansikbuffet", name:"한식뷔페",                   category:"한식", addr:"송파대로 201 송파테라타워2 B동 지하1층 G117~G119호", occasions:["점심", "저녁"] },
+    { id:"katsu",    name:"카츠파랑",                       category:"한식", addr:"", occasions:["점심", "저녁"] },
+    { id:"bulldog",  name:"불독",                           category:"일식", addr:"법원로 114 엠스테이트 지하1층 108호", occasions:["점심", "저녁"] },
+    { id:"haruensoku", name:"하루앤소쿠",                   category:"일식", addr:"법원로 114 E동 B139호", occasions:["점심", "저녁"] },
+    { id:"donkatsu", name:"돈까스의집",                     category:"일식", addr:"법원로 114 엠스테이트 지하1층 b143호", occasions:["점심", "저녁"] },
+    { id:"dakgukjip", name:"닭국집",                        category:"한식", addr:"법원로 128 1층 C102, C103호", occasions:["점심", "저녁"] },
+    { id:"seoulkongbiji", name:"서울콩비지",                category:"한식", addr:"동남로4길 33 1층", occasions:["점심", "저녁"] },
+    { id:"pyeongsangjip", name:"평상집",                    category:"한식", addr:"법원로8길 13 문정헤리움써밋타워 1층 106, 107호", occasions:["점심", "저녁"] },
+    { id:"hamheungmyeonok", name:"함흥면옥",                category:"한식", addr:"법원로 114 엠스테이트 D동 301호", occasions:["점심", "저녁"] },
+    { id:"hoangviet", name:"호앙비엣",                      category:"기타", addr:"법원로 128 문정역SKV1 B동 1층 134호", occasions:["점심", "저녁"] },
+    { id:"mukgol",   name:"묵골",                           category:"한식", addr:"새말로15길 22 1층", occasions:["점심", "저녁"] },
+    { id:"teumsaeraemyeon", name:"틈새라면",                category:"분식", addr:"법원로 128 SKV1 B동 1층 109호", occasions:["점심", "저녁"] },
+    { id:"basburger", name:"바스버거",                      category:"패스트푸드", addr:"송파대로 167 문정테라타워 A동 지하1층 G111호", occasions:["점심", "저녁"] },
+    { id:"manyeogimbap", name:"마녀김밥",                   category:"분식", addr:"법원로 114 엠스테이트 A동 112", occasions:["점심", "저녁"] },
+    { id:"midoin",   name:"미도인",                         category:"양식", addr:"", occasions:["점심", "저녁"] },
+    { id:"samgunbudaejjigae", name:"삼군부대찌개",          category:"한식", addr:"", occasions:["점심", "저녁"] },
+    { id:"slicepizza", name:"슬라이스피자마켓",             category:"패스트푸드", addr:"법원로4길 5 1층 112호", occasions:["점심", "저녁"] },
+    { id:"namujeotgarak", name:"나무젓가락",                category:"일식", addr:"법원로 114 엠스테이트 B동 지하 1층 155호", occasions:["점심", "저녁"] },
+    { id:"eunine",   name:"은이네해장국",                   category:"한식", addr:"", occasions:["점심", "해장", "저녁"] },
+    { id:"okdoenjang", name:"옥된장",                       category:"한식", addr:"법원로 114 C동 2층 223, 224호", occasions:["점심", "저녁"] },
+    { id:"heungdo",  name:"흥도식당",                       category:"일식", addr:"법원로 114 엠스테이트 지하1층 b동 155-1호", occasions:["점심", "저녁"] }
   ];
 
   var STORAGE_KEY = "clabi-lunch-roulette-v1";
@@ -432,8 +450,9 @@
         var category = (r[0] || "").trim();
         var name = (r[1] || "").trim();
         var addr = (r[2] || "").trim();
+        var occasions = (r[3] || "").split(",").map(function(s){ return s.trim(); }).filter(Boolean);
         if(!name) return;
-        items.push({ id: name, name: name, category: category || "기타", addr: addr });
+        items.push({ id: name, name: name, category: category || "기타", addr: addr, occasions: occasions.length ? occasions : ["점심","저녁"] });
       });
       return items.length ? items : null;
     }catch(e){
@@ -459,6 +478,7 @@
 
   var state = await loadState();
   var currentFilter = "전체";
+  var currentOccasion = "전체";
   var mode = state.mode === "twoStage" ? "twoStage" : "manual";
   var spinning = false;
   var currentRotation = 0;
@@ -467,6 +487,7 @@
   var ctx = wheelCanvas.getContext("2d");
   var hub = document.getElementById("hub");
   var tabsBox = document.getElementById("tabs");
+  var occasionTabsBox = document.getElementById("occasionTabs");
   var menuListBox = document.getElementById("menuList");
   var poolCountEl = document.getElementById("poolCount");
   var historyBox = document.getElementById("historyBox");
@@ -504,6 +525,16 @@
     addCategory.appendChild(opt);
   });
 
+  var addOccasionsBox = document.getElementById("addOccasions");
+  CATEGORY2_ORDER.forEach(function(occ){
+    var label = document.createElement("label");
+    var cb = document.createElement("input");
+    cb.type = "checkbox"; cb.value = occ; cb.checked = (occ === "점심");
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(occ));
+    addOccasionsBox.appendChild(label);
+  });
+
   function uid(){
     return "item-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,8);
   }
@@ -512,9 +543,14 @@
     return state.items.filter(function(i){ return i.active; });
   }
 
+  function occasionMatch(item){
+    return currentOccasion === "전체" || (item.occasions && item.occasions.indexOf(currentOccasion) !== -1);
+  }
+
   function wheelPool(){
     var active = activeItems();
     if(mode === "manual" && currentFilter !== "전체") active = active.filter(function(i){ return i.category === currentFilter; });
+    active = active.filter(occasionMatch);
     if(noRepeatEl.checked && state.recent.length){
       var filtered = active.filter(function(i){ return state.recent.indexOf(i.id) === -1; });
       if(filtered.length >= 2) return filtered;
@@ -627,8 +663,25 @@
     });
   }
 
+  function renderOccasionTabs(){
+    var all = ["전체"].concat(CATEGORY2_ORDER);
+    occasionTabsBox.innerHTML = "";
+    all.forEach(function(occ){
+      var btn = document.createElement("button");
+      btn.className = "tab"; btn.type = "button"; btn.textContent = occ;
+      btn.setAttribute("role","tab");
+      btn.setAttribute("aria-selected", occ === currentOccasion ? "true" : "false");
+      btn.addEventListener("click", function(){
+        currentOccasion = occ; setStatus("");
+        renderOccasionTabs(); renderList(); drawWheel(); updatePoolCount();
+      });
+      occasionTabsBox.appendChild(btn);
+    });
+  }
+
   function renderList(){
     var items = (mode !== "manual" || currentFilter === "전체") ? state.items : state.items.filter(function(i){ return i.category === currentFilter; });
+    if(currentOccasion !== "전체") items = items.filter(occasionMatch);
     menuListBox.innerHTML = "";
     items.forEach(function(item){
       var li = document.createElement("li");
@@ -650,6 +703,11 @@
       chip.className = "chip"; chip.textContent = item.category;
       chip.style.setProperty("--chip-color", CATEGORY_COLORS[item.category] || CATEGORY_COLORS["기타"]);
       sub.appendChild(chip);
+      (item.occasions || []).forEach(function(occ){
+        var occChip = document.createElement("span");
+        occChip.className = "occasion-chip"; occChip.textContent = occ;
+        sub.appendChild(occChip);
+      });
       if(item.addr){
         var addr = document.createElement("span");
         addr.className = "row-addr"; addr.textContent = item.addr;
@@ -680,6 +738,7 @@
   function updatePoolCount(){
     var active = activeItems();
     if(mode === "manual" && currentFilter !== "전체") active = active.filter(function(i){ return i.category === currentFilter; });
+    active = active.filter(occasionMatch);
     poolCountEl.textContent = active.length + "개 참여 중 (전체 " + state.items.length + "개)";
   }
 
@@ -757,7 +816,7 @@
   }
 
   async function spinTwoStage(){
-    var active = activeItems();
+    var active = activeItems().filter(occasionMatch);
     if(active.length < 2){
       setStatus(active.length === 0 ? "룰렛에 넣을 메뉴가 없어요. 메뉴를 추가해 주세요." : "메뉴가 2개 이상이어야 룰렛을 돌릴 수 있어요.");
       return;
@@ -853,17 +912,19 @@
     var name = addName.value.trim();
     if(!name) return;
     var category = addCategory.value;
-    state.items.push({ id: name, name: name, category: category, addr: "", active: true });
+    var occasions = Array.prototype.filter.call(addOccasionsBox.querySelectorAll("input"), function(cb){ return cb.checked; }).map(function(cb){ return cb.value; });
+    if(occasions.length === 0) occasions = ["점심"];
+    state.items.push({ id: name, name: name, category: category, addr: "", occasions: occasions, active: true });
     saveState();
     addName.value = "";
     renderTabs(); renderList(); drawWheel(); updatePoolCount();
-    syncNewItemToSheet(category, name);
+    syncNewItemToSheet(category, name, occasions);
   });
 
-  async function syncNewItemToSheet(category, name){
+  async function syncNewItemToSheet(category, name, occasions){
     if(!APPS_SCRIPT_URL) return;
     try{
-      var res = await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ category: category, name: name }) });
+      var res = await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ category: category, name: name, occasions: (occasions || []).join(",") }) });
       var data = await res.json();
       if(!data.ok) setStatus("시트에 저장하지 못했어요 (로컬에는 추가됨): " + (data.error || ""));
     }catch(e){
@@ -1057,7 +1118,7 @@
     renderTabs(); renderList(); drawWheel(); updatePoolCount(); renderHistory(); setStatus("");
   });
 
-  updateModeUI(); renderTabs(); renderList(); drawWheel(); updatePoolCount(); renderHistory();
+  updateModeUI(); renderTabs(); renderOccasionTabs(); renderList(); drawWheel(); updatePoolCount(); renderHistory();
 
   /* ---------- background polling: pick up new sheet rows without a manual refresh ---------- */
   var POLL_INTERVAL_MS = 45000;
