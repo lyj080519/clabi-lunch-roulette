@@ -477,8 +477,12 @@
   }
 
   var state = await loadState();
-  var currentFilter = "전체";
-  var currentOccasions = [];
+  var currentFilters = [];
+  var currentOccasion = "전체";
+
+  function categoryMatch(item){
+    return currentFilters.length === 0 || currentFilters.indexOf(item.category) !== -1;
+  }
   var mode = state.mode === "twoStage" ? "twoStage" : "manual";
   var spinning = false;
   var currentRotation = 0;
@@ -544,14 +548,12 @@
   }
 
   function occasionMatch(item){
-    if(currentOccasions.length === 0) return true;
-    if(!item.occasions) return false;
-    return currentOccasions.some(function(occ){ return item.occasions.indexOf(occ) !== -1; });
+    return currentOccasion === "전체" || (item.occasions && item.occasions.indexOf(currentOccasion) !== -1);
   }
 
   function wheelPool(){
     var active = activeItems();
-    if(mode === "manual" && currentFilter !== "전체") active = active.filter(function(i){ return i.category === currentFilter; });
+    if(mode === "manual") active = active.filter(categoryMatch);
     active = active.filter(occasionMatch);
     if(noRepeatEl.checked && state.recent.length){
       var filtered = active.filter(function(i){ return state.recent.indexOf(i.id) === -1; });
@@ -648,17 +650,25 @@
     state.items.forEach(function(i){ if(cats.indexOf(i.category) === -1) cats.push(i.category); });
     cats.sort(function(a,b){ return orderRank(a) - orderRank(b); });
     var all = ["전체"].concat(cats);
-    if(all.indexOf(currentFilter) === -1) currentFilter = "전체";
+    currentFilters = currentFilters.filter(function(c){ return cats.indexOf(c) !== -1; });
 
     tabsBox.innerHTML = "";
     all.forEach(function(cat){
       var btn = document.createElement("button");
       btn.className = "tab"; btn.type = "button"; btn.textContent = cat;
       btn.setAttribute("role","tab");
-      btn.setAttribute("aria-selected", cat === currentFilter ? "true" : "false");
+      var isActive = cat === "전체" ? currentFilters.length === 0 : currentFilters.indexOf(cat) !== -1;
+      btn.setAttribute("aria-selected", isActive ? "true" : "false");
       if(cat !== "전체") btn.style.setProperty("--tab-color", CATEGORY_COLORS[cat] || CATEGORY_COLORS["기타"]);
       btn.addEventListener("click", function(){
-        currentFilter = cat; setStatus("");
+        if(cat === "전체"){
+          currentFilters = [];
+        } else {
+          var idx = currentFilters.indexOf(cat);
+          if(idx === -1) currentFilters.push(cat);
+          else currentFilters.splice(idx, 1);
+        }
+        setStatus("");
         renderTabs(); renderList(); drawWheel(); updatePoolCount();
       });
       tabsBox.appendChild(btn);
@@ -672,17 +682,9 @@
       var btn = document.createElement("button");
       btn.className = "tab"; btn.type = "button"; btn.textContent = occ;
       btn.setAttribute("role","tab");
-      var isActive = occ === "전체" ? currentOccasions.length === 0 : currentOccasions.indexOf(occ) !== -1;
-      btn.setAttribute("aria-selected", isActive ? "true" : "false");
+      btn.setAttribute("aria-selected", occ === currentOccasion ? "true" : "false");
       btn.addEventListener("click", function(){
-        if(occ === "전체"){
-          currentOccasions = [];
-        } else {
-          var idx = currentOccasions.indexOf(occ);
-          if(idx === -1) currentOccasions.push(occ);
-          else currentOccasions.splice(idx, 1);
-        }
-        setStatus("");
+        currentOccasion = occ; setStatus("");
         renderOccasionTabs(); renderList(); drawWheel(); updatePoolCount();
       });
       occasionTabsBox.appendChild(btn);
@@ -690,8 +692,8 @@
   }
 
   function renderList(){
-    var items = (mode !== "manual" || currentFilter === "전체") ? state.items : state.items.filter(function(i){ return i.category === currentFilter; });
-    if(currentOccasions.length > 0) items = items.filter(occasionMatch);
+    var items = (mode !== "manual") ? state.items : state.items.filter(categoryMatch);
+    if(currentOccasion !== "전체") items = items.filter(occasionMatch);
     menuListBox.innerHTML = "";
     items.forEach(function(item){
       var li = document.createElement("li");
@@ -747,7 +749,7 @@
 
   function updatePoolCount(){
     var active = activeItems();
-    if(mode === "manual" && currentFilter !== "전체") active = active.filter(function(i){ return i.category === currentFilter; });
+    if(mode === "manual") active = active.filter(categoryMatch);
     active = active.filter(occasionMatch);
     poolCountEl.textContent = active.length + "개 참여 중 (전체 " + state.items.length + "개)";
   }
@@ -1091,7 +1093,7 @@
     if(!pendingImport) return;
     state = { items: pendingImport, recent: [] };
     pendingImport = null;
-    saveState(); currentFilter = "전체";
+    saveState(); currentFilters = [];
     importConfirmBox.hidden = true;
     setImportStatus("메뉴판을 엑셀 내용으로 교체했어요.");
     renderTabs(); renderList(); drawWheel(); updatePoolCount(); renderHistory(); setStatus("");
@@ -1122,7 +1124,7 @@
     var sheetItems = await fetchSheetItems();
     var seed = sheetItems || DEFAULT_ITEMS;
     state = { items: seed.map(function(i){ return Object.assign({active:true}, i); }), recent: [] };
-    saveState(); currentFilter = "전체";
+    saveState(); currentFilters = [];
     resetBtn.disabled = false;
     resetBtn.textContent = "기본 목록으로 초기화";
     renderTabs(); renderList(); drawWheel(); updatePoolCount(); renderHistory(); setStatus("");
