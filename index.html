@@ -478,7 +478,7 @@
 
   var state = await loadState();
   var currentFilter = "전체";
-  var currentOccasion = "전체";
+  var currentOccasions = [];
   var mode = state.mode === "twoStage" ? "twoStage" : "manual";
   var spinning = false;
   var currentRotation = 0;
@@ -544,7 +544,9 @@
   }
 
   function occasionMatch(item){
-    return currentOccasion === "전체" || (item.occasions && item.occasions.indexOf(currentOccasion) !== -1);
+    if(currentOccasions.length === 0) return true;
+    if(!item.occasions) return false;
+    return currentOccasions.some(function(occ){ return item.occasions.indexOf(occ) !== -1; });
   }
 
   function wheelPool(){
@@ -670,9 +672,17 @@
       var btn = document.createElement("button");
       btn.className = "tab"; btn.type = "button"; btn.textContent = occ;
       btn.setAttribute("role","tab");
-      btn.setAttribute("aria-selected", occ === currentOccasion ? "true" : "false");
+      var isActive = occ === "전체" ? currentOccasions.length === 0 : currentOccasions.indexOf(occ) !== -1;
+      btn.setAttribute("aria-selected", isActive ? "true" : "false");
       btn.addEventListener("click", function(){
-        currentOccasion = occ; setStatus("");
+        if(occ === "전체"){
+          currentOccasions = [];
+        } else {
+          var idx = currentOccasions.indexOf(occ);
+          if(idx === -1) currentOccasions.push(occ);
+          else currentOccasions.splice(idx, 1);
+        }
+        setStatus("");
         renderOccasionTabs(); renderList(); drawWheel(); updatePoolCount();
       });
       occasionTabsBox.appendChild(btn);
@@ -681,7 +691,7 @@
 
   function renderList(){
     var items = (mode !== "manual" || currentFilter === "전체") ? state.items : state.items.filter(function(i){ return i.category === currentFilter; });
-    if(currentOccasion !== "전체") items = items.filter(occasionMatch);
+    if(currentOccasions.length > 0) items = items.filter(occasionMatch);
     menuListBox.innerHTML = "";
     items.forEach(function(item){
       var li = document.createElement("li");
